@@ -1,0 +1,7 @@
+port: 8080
+database:
+  host: localhost
+  port: 33060
+  user: root
+  password: mariadbpass
+  name: go_inventory
