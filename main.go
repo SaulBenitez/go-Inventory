@@ -21,18 +21,6 @@ func main() {
 		),
 		fx.Invoke(
 			func(ctx context.Context, serv service.Service) {
-				err := serv.RegisterUser(ctx, "my@email.com", "myname", "mypassword")
-				if err != nil {
-					panic(err)
-				}
-
-				u, err := serv.LoginUser(ctx, "my@email.com", "mypassword")
-				if err != nil {
-					panic(err)
-				}
-				if u.Name != "myname" {
-					panic("wrong user name")
-				}
 			},
 		),
 	)
