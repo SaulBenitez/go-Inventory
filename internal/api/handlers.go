@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/SaulBenitez/inventory/encryption"
 	"github.com/SaulBenitez/inventory/internal/api/dtos"
 	"github.com/SaulBenitez/inventory/internal/models"
 	"github.com/SaulBenitez/inventory/internal/service"
@@ -16,6 +17,47 @@ type ResponseMessage struct {
 }
 
 // TODO: As far as possible, refactor these handlers
+
+func (a *API) LoginUser(c echo.Context) error {
+	ctx := c.Request().Context()
+	params := dtos.LogingUserRequest{}
+
+	err := c.Bind(&params)
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusBadRequest, ResponseMessage{Message: "invalid request"})
+	}
+
+	err = a.dataValidator.Struct(params)
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusBadRequest, ResponseMessage{Message: err.Error()})
+	}
+
+	u, err := a.serv.LoginUser(ctx, params.Email, params.Password)
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusUnauthorized, ResponseMessage{Message: "Internal server error"})
+	}
+
+	token, err := encryption.SignedLoginToken(u)
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusInternalServerError, ResponseMessage{Message: "Internal server error"})
+	}
+
+	cookie := &http.Cookie{
+		Name: "Authorization",
+		Value: token,
+		Secure: true,
+		SameSite: http.SameSiteNoneMode,
+		HttpOnly: true,
+	}
+
+	c.SetCookie(cookie)
+
+	return c.JSON(http.StatusOK, map[string]string{"success": "true"})
+}
 
 func (a *API) RegisterUser(c echo.Context) error {
 
